@@ -7,3 +7,63 @@ warnings.filterwarnings("ignore")
 
 f = open('C:\\Users\\Yongcheng Zhu\\OneDrive - business\\一些下载和课程\\IEOR 4523 Data Analytics\\train_V2.csv')
 train = pd.read_csv(f)
+import gc
+import time
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+train.info()
+
+invalid_match_ids = train[train['winPlacePerc'].isna()]['matchId'].values
+train_cleaned = train[-train['matchId'].isin(invalid_match_ids)]
+
+
+#Normalize
+train_cleaned['playersJoined'] = train_cleaned.groupby('matchId')['matchId'].transform('count')
+train_cleaned['killsN'] = train_cleaned['kills']*((100-train_cleaned['playersJoined'])/100 + 1)
+train_cleaned['damageDealtN'] = train_cleaned['damageDealt']*((100-train_cleaned['playersJoined'])/100 + 1)
+train_cleaned['maxPlaceN'] = train_cleaned['maxPlace']*((100-train_cleaned['playersJoined'])/100 + 1)
+
+#1. Headshotrate
+train_cleaned['headshotrate'] = train_cleaned['headshotKills'] / train_cleaned['kills']
+train_cleaned['headshotrate'].fillna(0, inplace=True)
+train_cleaned['headshotrate'].replace(np.inf, 0, inplace=True)
+train_cleaned[['kills','headshotrate','headshotKills', 'winPlacePerc']].corr()
+
+#2. killStreak rate
+train_cleaned['killStreakrate'] = train_cleaned['killStreaks'] / train_cleaned['kills']
+train_cleaned['killStreakrate'].fillna(0, inplace=True)
+train_cleaned['killStreakrate'].replace(np.inf, 0, inplace=True)
+train_cleaned[['kills','killStreakrate','killStreaks', 'winPlacePerc']].corr()
+
+#3. healthitems
+train_cleaned['healthitems'] = train_cleaned['heals'] + train_cleaned['boosts']
+train_cleaned['boostsPerWDistance'] = train_cleaned['boosts']/train_cleaned['walkDistance']
+train_cleaned['boostsPerWDistance'].fillna(0, inplace=True)
+train_cleaned['boostsPerWDistance'].replace(np.inf, 0, inplace=True)
+train_cleaned['healsPerWDistance'] = train_cleaned['heals']/train['walkDistance']
+train_cleaned['healsPerWDistance'].fillna(0, inplace=True)
+train_cleaned['healsPerWDistance'].replace(np.inf, 0, inplace=True)
+train_cleaned['healsAndBoostsPerWDistance'] = train_cleaned['healthitems']/train['walkDistance']
+train_cleaned['healsAndBoostsPerWDistance'].fillna(0, inplace=True)
+train_cleaned['healsAndBoostsPerWDistance'].replace(np.inf, 0, inplace=True)
+train_cleaned[['heals','healthitems','boosts','boostsPerWDistance','healsPerWDistance','healsAndBoostsPerWDistance', 'winPlacePerc']].corr()
+
+#4. Kills and assits for two or more players
+train_cleaned['kills_assists'] = train_cleaned['kills'] + train_cleaned['assists']
+train_cleaned['killsPerWDistance'] = train_cleaned['kills']/train_cleaned['walkDistance']
+train_cleaned['killsPerWDistance'].fillna(0, inplace=True)
+train_cleaned['killsPerWDistance'].replace(np.inf, 0, inplace=True)
+train_cleaned[['kills','assists','kills_assists','killsPerWDistance', 'winPlacePerc']].corr()
+
+#5. Total Distance
+train_cleaned['totalDistance'] = train_cleaned['walkDistance']+train_cleaned['rideDistance']+train_cleaned['swimDistance']
+train_cleaned[['totalDistance','walkDistance','rideDistance','swimDistance', 'winPlacePerc']].corr()
+
+#6. Numbers of people in the team
+train_cleaned['Numin1team'] = [1 if i>50 else 2 if (i>25 & i<=50) else 4 for i in train_cleaned['numGroups']]
+
+#Others
+train_cleaned['weaponsAcquired']
+train_cleaned['killPlace']
+train_cleaned['damageDealt']
+train_cleaned['longestKill']
