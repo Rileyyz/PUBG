@@ -65,5 +65,19 @@ train_cleaned['Numin1team'] = [1 if i>50 else 2 if (i>25 & i<=50) else 4 for i i
 #Others
 train_cleaned['weaponsAcquired']
 train_cleaned['killPlace']
-train_cleaned['damageDealt']
+#train_cleaned['damageDealt']
 train_cleaned['longestKill']
+
+corr = train_cleaned[['killPlace', 'longestKill', 'weaponsAcquired', 'damageDealt', 'assists', 'matchDuration', 'kills', 'winPlacePerc']].corr()
+
+plt.figure(figsize=(8,6))
+sns.heatmap(
+    corr,
+    xticklabels=corr.columns.values,
+    yticklabels=corr.columns.values,
+    annot=True,
+    linecolor='white',
+    linewidths=0.1,
+    cmap="RdBu"
+)
+plt.show()
